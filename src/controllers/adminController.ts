@@ -48,7 +48,20 @@ export const getStats = async (_req: Request, res: Response) => {
 };
 
 export const createProduct = async (req: Request, res: Response) => {
-  const { id, name, price, image, images, category, stock } = req.body;
+  const {
+    id,
+    name,
+    price,
+    image,
+    images,
+    category,
+    stock,
+    description,
+    dimensions,
+    material,
+    care,
+    color,
+  } = req.body;
   if (!id || !name || price == null || !category) {
     return res.status(400).json({ message: "id, name, price, and category are required" });
   }
@@ -63,6 +76,11 @@ export const createProduct = async (req: Request, res: Response) => {
       images: serialized.images,
       category,
       stock: stock ?? 0,
+      description: description ?? null,
+      dimensions: dimensions ?? null,
+      material: material ?? null,
+      care: care ?? null,
+      color: color ?? null,
     });
     const created = await db.select().from(products).where(eq(products.id, id));
     res.status(201).json(formatProduct(created[0]));
@@ -74,7 +92,19 @@ export const createProduct = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, price, image, images, category, stock } = req.body;
+  const {
+    name,
+    price,
+    image,
+    images,
+    category,
+    stock,
+    description,
+    dimensions,
+    material,
+    care,
+    color,
+  } = req.body;
   try {
     const existing = await db.select().from(products).where(eq(products.id, id));
     if (existing.length === 0) {
@@ -86,6 +116,11 @@ export const updateProduct = async (req: Request, res: Response) => {
     if (price !== undefined) updates.price = String(price);
     if (category !== undefined) updates.category = category;
     if (stock !== undefined) updates.stock = stock;
+    if (description !== undefined) updates.description = description || null;
+    if (dimensions !== undefined) updates.dimensions = dimensions || null;
+    if (material !== undefined) updates.material = material || null;
+    if (care !== undefined) updates.care = care || null;
+    if (color !== undefined) updates.color = color || null;
 
     if (images !== undefined) {
       const serialized = serializeProductImages(Array.isArray(images) ? images : []);
@@ -305,19 +340,52 @@ export const updateSettings = async (req: Request, res: Response) => {
 };
 
 export const getHeroSettings = async (_req: Request, res: Response) => {
+  const defaultQuips = [
+    "Hooked, not hurried",
+    "Beige was never invited",
+    "Stitch count: vibes only",
+    "Caffeine-powered loops",
+  ];
+
   try {
     const rows = await db.select().from(settings);
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+
+    let quips = defaultQuips;
+    if (map.hero_quips) {
+      try {
+        const parsed = JSON.parse(map.hero_quips);
+        if (Array.isArray(parsed) && parsed.length === 4 && parsed.every((q) => typeof q === "string")) {
+          quips = parsed;
+        }
+      } catch {
+        /* use defaults */
+      }
+    }
+
     res.json({
       tag: map.hero_tag ?? "HANDMADE CROCHET MAGIC",
       headline: map.hero_headline ?? "HOOKED ON LOOPS.",
       subheadline:
         map.hero_subheadline ??
         "One-of-a-kind crochet pieces, hand-hooked in small batches.",
+      image: map.hero_image ?? null,
+      quips,
     });
   } catch (error) {
     console.error("Get hero settings error:", error);
     res.status(500).json({ message: "Error fetching hero settings" });
+  }
+};
+
+export const getFooterSettings = async (_req: Request, res: Response) => {
+  try {
+    const rows = await db.select().from(settings);
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    res.json({ image: map.footer_dp ?? null });
+  } catch (error) {
+    console.error("Get footer settings error:", error);
+    res.status(500).json({ message: "Error fetching footer settings" });
   }
 };
 

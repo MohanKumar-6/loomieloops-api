@@ -13,8 +13,9 @@ cloudinary.config({
 export const uploadImage = async (fileStr: string) => {
   try {
     const uploadResponse = await cloudinary.uploader.upload(fileStr, {
-      upload_preset: "ml_default", // You may need to create this in Cloudinary
+      upload_preset: "ml_default",
       folder: "loomieloops",
+      transformation: [{ width: 1200, height: 1200, crop: "fill", gravity: "center" }],
     });
     return uploadResponse.secure_url;
   } catch (error) {

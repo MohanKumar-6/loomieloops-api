@@ -20,6 +20,11 @@ export const products = mysqlTable("products", {
   images: text("images"), // JSON array of image URLs
   category: varchar("category", { length: 100 }).notNull(),
   stock: int("stock").default(0).notNull(),
+  description: text("description"),
+  dimensions: text("dimensions"),
+  material: text("material"),
+  care: text("care"),
+  color: varchar("color", { length: 100 }),
 });
 
 export const orders = mysqlTable("orders", {
